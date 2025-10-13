@@ -11,6 +11,55 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const users = []; // sementara array, nanti ganti DB sungguhan
+
+const SECRET = process.env.JWT_SECRET || 'supersecret';
+
+// REGISTER
+app.post('/api/register', async (req, res) => {
+  const { name, email, password } = req.body;
+  if (users.find(u => u.email === email)) {
+    return res.status(400).json({ error: 'Email sudah terdaftar' });
+  }
+  const hash = await bcrypt.hash(password, 10);
+  const newUser = { id: users.length + 1, name, email, password_hash: hash };
+  users.push(newUser);
+  res.json({ message: 'Registrasi berhasil' });
+});
+
+// LOGIN
+app.post('/api/login', async (req, res) => {
+  const { email, password } = req.body;
+  const user = users.find(u => u.email === email);
+  if (!user) return res.status(401).json({ error: 'Email tidak ditemukan' });
+
+  const ok = await bcrypt.compare(password, user.password_hash);
+  if (!ok) return res.status(401).json({ error: 'Password salah' });
+
+  const token = jwt.sign({ id: user.id, email: user.email }, SECRET, { expiresIn: '7d' });
+  res.json({ token });
+});
+
+// Middleware auth
+function auth(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: 'No token' });
+  const token = authHeader.split(' ')[1];
+  try {
+    req.user = jwt.verify(token, SECRET);
+    next();
+  } catch {
+    res.status(401).json({ error: 'Token invalid' });
+  }
+}
+
+// Contoh endpoint protected
+app.get('/api/profile', auth, (req, res) => {
+  const user = users.find(u => u.id === req.user.id);
+  res.json({ user });
+});
 app.use(express.static(path.join(__dirname, 'public')));
 
 // limiter sederhana
