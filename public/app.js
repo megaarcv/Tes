@@ -1,3 +1,9 @@
+// cek login
+const token = localStorage.getItem('token');
+if (!token && !location.pathname.includes('login')) {
+  location.href = '/login.html';
+}
+
 // public/app.js
 const API = '/api/products';
 const productList = document.getElementById('productList');
