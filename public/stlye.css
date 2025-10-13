@@ -1,0 +1,17 @@
+/* style.css (opsional tambahan) */
+.sidebar {
+  transition: transform 0.3s ease;
+}
+
+.sidebar.hidden {
+  transform: translateX(-100%);
+}
+
+.card-radius {
+  border-radius: 12px;
+}
+
+/* efek hover tambahan */
+nav a:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
