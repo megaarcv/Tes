@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white flex items-center justify-center h-screen">
+  <form id="regForm" class="bg-gray-800 p-6 rounded w-80 space-y-3">
+    <h1 class="text-xl font-bold mb-4">Daftar Akun</h1>
+    <input name="name" placeholder="Nama" class="w-full p-2 rounded bg-gray-700" required>
+    <input name="email" type="email" placeholder="Email" class="w-full p-2 rounded bg-gray-700" required>
+    <input name="password" type="password" placeholder="Password" class="w-full p-2 rounded bg-gray-700" required>
+    <button class="bg-blue-600 w-full py-2 rounded">Daftar</button>
+    <div class="text-sm text-center mt-2">Sudah punya akun? <a href="/login.html" class="text-blue-400">Login</a></div>
+  </form>
+
+  <script>
+  document.getElementById('regForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const f = e.target;
+    const data = { name: f.name.value, email: f.email.value, password: f.password.value };
+    const r = await fetch('/api/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    const j = await r.json();
+    alert(j.message || j.error);
+    if (r.ok) location.href = '/login.html';
+  };
+  </script>
+</body>
+      </html>
