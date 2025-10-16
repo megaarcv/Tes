@@ -1,29 +1,39 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="id">
 <head>
-  <meta charset="utf-8">
-  <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8">
+<title>Login</title>
+<style>
+body { background:#0f172a; color:white; font-family:sans-serif; text-align:center; margin-top:10%; }
+input { margin:5px; padding:8px; width:220px; border-radius:6px; border:none; }
+button { padding:8px 20px; border:none; border-radius:6px; background:#3b82f6; color:white; cursor:pointer; }
+</style>
 </head>
-<body class="bg-gray-900 text-white flex items-center justify-center h-screen">
-  <form id="loginForm" class="bg-gray-800 p-6 rounded w-80 space-y-3">
-    <h1 class="text-xl font-bold mb-4">Masuk Akun</h1>
-    <input name="email" type="email" placeholder="Email" class="w-full p-2 rounded bg-gray-700" required>
-    <input name="password" type="password" placeholder="Password" class="w-full p-2 rounded bg-gray-700" required>
-    <button class="bg-blue-600 w-full py-2 rounded">Login</button>
-    <div class="text-sm text-center mt-2">Belum punya akun? <a href="/register.html" class="text-blue-400">Daftar</a></div>
-  </form>
+<body>
+<h2>Login ke Dashboard</h2>
+<input type="email" id="email" placeholder="Email"><br>
+<input type="password" id="password" placeholder="Password"><br>
+<button onclick="login()">Login</button>
+<p>Belum punya akun? <a href="register.html" style="color:#38bdf8;">Daftar</a></p>
 
-  <script>
-  document.getElementById('loginForm').onsubmit = async (e) => {
-    e.preventDefault();
-    const f = e.target;
-    const data = { email: f.email.value, password: f.password.value };
-    const r = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-    const j = await r.json();
-    if (!r.ok) return alert(j.error);
-    localStorage.setItem('token', j.token);
+<script>
+async function login() {
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  const res = await fetch('/api/login', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ email, password })
+  });
+  const data = await res.json();
+  if (data.token) {
+    localStorage.setItem('token', data.token);
+    alert('Login sukses!');
     location.href = '/';
-  };
-  </script>
+  } else {
+    alert(data.error || 'Gagal login');
+  }
+}
+</script>
 </body>
 </html>
