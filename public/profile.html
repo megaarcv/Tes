@@ -1,58 +1,120 @@
 <!doctype html>
 <html lang="id">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Profil Pengguna</title>
+  <title>Profil Pengguna - Shiza Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-900 text-gray-100 min-h-screen p-6">
-  <div class="max-w-3xl mx-auto bg-gray-800 p-6 rounded">
+<body class="bg-gray-900 text-gray-100 min-h-screen flex items-center justify-center">
+  <div class="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md">
     <div class="flex justify-between items-center mb-6">
-      <h2 class="text-2xl font-semibold">Informasi Pengguna</h2>
-      <button onclick="logout()" class="px-3 py-2 bg-red-500 rounded">Logout</button>
+      <h2 class="text-2xl font-semibold">Profil Pengguna</h2>
+      <button onclick="logout()" class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded">Logout</button>
     </div>
-    <form class="space-y-4">
+
+    <form id="profileForm" class="space-y-4">
       <div>
-        <label class="block text-sm text-gray-400">Username</label>
-        <input id="username" class="w-full bg-gray-700 rounded px-3 py-2" readonly>
+        <label class="block text-sm text-gray-400">Nama Lengkap</label>
+        <input id="username" type="text" class="w-full p-2 bg-gray-700 rounded border border-gray-600 focus:outline-none">
       </div>
       <div>
         <label class="block text-sm text-gray-400">Email</label>
-        <input id="email" class="w-full bg-gray-700 rounded px-3 py-2" readonly>
+        <input id="email" type="email" class="w-full p-2 bg-gray-700 rounded border border-gray-600 focus:outline-none" readonly>
       </div>
       <div>
         <label class="block text-sm text-gray-400">Nomor HP</label>
-        <input id="phone" class="w-full bg-gray-700 rounded px-3 py-2" readonly>
+        <input id="phone" type="text" class="w-full p-2 bg-gray-700 rounded border border-gray-600 focus:outline-none" placeholder="+628xxxxxx">
+      </div>
+
+      <div class="flex justify-between mt-6">
+        <button type="button" onclick="saveProfile()" class="bg-green-600 px-4 py-2 rounded hover:bg-green-700">Simpan</button>
+        <button type="button" onclick="deleteAccount()" class="bg-red-600 px-4 py-2 rounded hover:bg-red-700">Hapus Akun</button>
       </div>
     </form>
   </div>
-<script>
-async function loadProfile() {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    window.location.href = '/login.html';
-    return;
-  }
-  const res = await fetch('/api/profile', {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  const data = await res.json();
-  if (data.error) {
-    alert('Sesi habis, silakan login ulang');
-    localStorage.removeItem('token');
-    window.location.href = '/login.html';
-    return;
-  }
-  document.getElementById('username').value = data.username;
-  document.getElementById('email').value = data.email;
-  document.getElementById('phone').value = data.phone || '-';
-}
-function logout() {
-  localStorage.removeItem('token');
-  window.location.href = '/login.html';
-}
-document.addEventListener('DOMContentLoaded', loadProfile);
-</script>
+
+  <script>
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = '/login.html';
+    }
+
+    // === Ambil data profil ===
+    async function loadProfile() {
+      try {
+        const res = await fetch('/api/profile', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.error) {
+          alert('Sesi login habis, silakan login ulang.');
+          localStorage.removeItem('token');
+          window.location.href = '/login.html';
+          return;
+        }
+        document.getElementById('username').value = data.username || '';
+        document.getElementById('email').value = data.email || '';
+        document.getElementById('phone').value = data.phone || '';
+      } catch (err) {
+        console.error('Gagal ambil profil:', err);
+      }
+    }
+
+    // === Simpan perubahan profil ===
+    async function saveProfile() {
+      const username = document.getElementById('username').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      try {
+        const res = await fetch('/api/profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ username, phone })
+        });
+        const data = await res.json();
+        if (data.error) {
+          alert(data.error);
+        } else {
+          alert('Profil berhasil diperbarui!');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Gagal menyimpan profil!');
+      }
+    }
+
+    // === Hapus akun ===
+    async function deleteAccount() {
+      if (!confirm('Yakin ingin menghapus akun?')) return;
+      try {
+        const res = await fetch('/api/profile', {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('Akun berhasil dihapus.');
+          localStorage.removeItem('token');
+          window.location.href = '/register.html';
+        } else {
+          alert(data.error || 'Gagal menghapus akun.');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Gagal menghapus akun!');
+      }
+    }
+
+    // === Logout ===
+    function logout() {
+      localStorage.removeItem('token');
+      window.location.href = '/login.html';
+    }
+
+    loadProfile();
+  </script>
 </body>
 </html>
