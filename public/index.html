@@ -4,10 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Shiza Dashboard</title>
-
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <style>
     .sidebar { width: 280px; }
     .card-radius { border-radius: 12px; }
@@ -26,7 +24,6 @@
           <div class="text-xs text-gray-400">Akun Aktif</div>
         </div>
       </div>
-
       <nav>
         <a class="block py-2 px-3 rounded bg-gray-700 mb-2">Dashboard</a>
         <a class="block py-2 px-3 rounded hover:bg-gray-700">My Balance</a>
@@ -40,15 +37,21 @@
         </div>
       </nav>
     </aside>
-
     <!-- Main -->
     <main class="flex-1 p-6">
-      <div class="flex items-center justify-between md:hidden mb-4">
-        <button id="btnToggle" class="px-3 py-2 bg-gray-800 rounded">☰</button>
-        <div class="text-lg font-semibold">Dashboard</div>
-        <div></div>
+      <!-- Header dengan menu profil -->
+      <div class="flex justify-end mb-6">
+        <div class="relative">
+          <button id="profileMenu" class="bg-gray-800 px-4 py-2 rounded flex items-center gap-2">
+            <span id="userShort">U</span> ▼
+          </button>
+          <div id="dropdown" class="absolute right-0 mt-2 bg-gray-800 rounded shadow-lg hidden">
+            <a href="/profile.html" class="block px-4 py-2 hover:bg-gray-700">My Profile</a>
+            <a href="#" onclick="logout()" class="block px-4 py-2 hover:bg-gray-700 text-red-400">Logout</a>
+          </div>
+        </div>
       </div>
-
+      <!-- Cards -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div class="bg-blue-500 p-6 card-radius">
           <div class="text-sm text-blue-100">Pendapatan Bulan Ini</div>
@@ -59,71 +62,81 @@
           <div class="text-3xl font-bold mt-2">Rp 40.000,00</div>
         </div>
       </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <section class="lg:col-span-2 bg-gray-800 p-4 card-radius">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold">Produk</h2>
-            <button id="refreshBtn" class="text-sm px-3 py-1 bg-gray-700 rounded">Refresh</button>
-          </div>
-
-          <div id="productList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-        </section>
-
-        <aside class="bg-gray-800 p-4 card-radius">
-          <h3 class="text-lg font-semibold mb-4">Grafik Penjualan</h3>
-          <canvas id="salesChart" height="260"></canvas>
-        </aside>
-      </div>
+      <!-- Produk -->
+      <section class="bg-gray-800 p-4 card-radius">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold">Produk</h2>
+          <button id="refreshBtn" class="text-sm px-3 py-1 bg-gray-700 rounded">Refresh</button>
+        </div>
+        <div id="productList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </section>
+      <!-- Chart -->
+      <aside class="bg-gray-800 p-4 card-radius mt-6">
+        <h3 class="text-lg font-semibold mb-4">Grafik Penjualan</h3>
+        <canvas id="salesChart" height="260"></canvas>
+      </aside>
     </main>
   </div>
-
-<script>
-  // Proteksi halaman
-  document.addEventListener('DOMContentLoaded', async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      window.location.href = '/login.html';
-      return;
-    }
-
-    try {
-      const res = await fetch('/api/products', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.error) {
-        alert('Sesi login habis, silakan login ulang.');
-        localStorage.removeItem('token');
+  <!-- Script utama -->
+  <script>
+    // Proteksi halaman
+    document.addEventListener('DOMContentLoaded', async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
         window.location.href = '/login.html';
         return;
       }
-
-      document.getElementById('userName').textContent = data.user?.name || 'User';
-      renderProducts(data.data);
-    } catch (err) {
-      console.error('Gagal memuat data:', err);
-    }
-  });
-
-  function logout() {
-    localStorage.removeItem('token');
-    alert('Berhasil logout!');
-    window.location.href = '/login.html';
-  }
-
-  function renderProducts(products) {
-    const container = document.getElementById('productList');
-    container.innerHTML = '';
-    products.forEach(p => {
-      container.innerHTML += `
-        <div class="bg-gray-700 p-4 rounded">
-          <img src="${p.image}" alt="${p.title}" class="w-full h-40 object-cover rounded mb-3">
-          <h4 class="font-semibold text-sm">${p.title}</h4>
-          <div class="text-sm text-gray-400">Rp ${p.price}</div>
-        </div>`;
+      // Ambil data user dari /api/profile
+      try {
+        const res = await fetch('/api/profile', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        document.getElementById('userName').textContent = data.username;
+        document.getElementById('userShort').textContent = data.username.charAt(0).toUpperCase();
+      } catch (err) {
+        console.error('Gagal ambil profil:', err);
+        localStorage.removeItem('token');
+        window.location.href = '/login.html';
+      }
+      // Ambil produk
+      try {
+        const res = await fetch('/api/products', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const result = await res.json();
+        renderProducts(result.data);
+      } catch (err) {
+        console.error('Gagal ambil produk:', err);
+      }
     });
-  }
-</script>
+    // Render produk
+    function renderProducts(products) {
+      const container = document.getElementById('productList');
+      container.innerHTML = '';
+      products.forEach(p => {
+        container.innerHTML += `
+          <div class="bg-gray-700 p-4 rounded">
+            <img src="${p.image}" alt="${p.title}" class="w-full h-40 object-cover rounded mb-3">
+            <h4 class="font-semibold text-sm">${p.title}</h4>
+            <div class="text-sm text-gray-400">Rp ${p.price}</div>
+          </div>
+        `;
+      });
+    }
+    // Logout
+    function logout() {
+      localStorage.removeItem('token');
+      alert('Berhasil logout');
+      window.location.href = '/login.html';
+    }
+    // Toggle dropdown profil
+    const profileMenu = document.getElementById('profileMenu');
+    const dropdown = document.getElementById('dropdown');
+    profileMenu.addEventListener('click', () => {
+      dropdown.classList.toggle('hidden');
+    });
+  </script>
 </body>
-  </html>
+</html>
