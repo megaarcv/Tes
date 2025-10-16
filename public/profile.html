@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Login</title>
+<style>
+body { background:#0f172a; color:white; font-family:sans-serif; text-align:center; margin-top:10%; }input { margin:5px; padding:8px; width:220px; border-radius:6px; border:none; }
+button { padding:8px 20px; border:none; border-radius:6px; background:#3b82f6; color:white; cursor:pointer; }
+</style>
+</head>
+<body>
+<h2>Login ke Dashboard</h2>
+<input type="email" id="email" placeholder="Email"><br>
+<input type="password" id="password" placeholder="Password"><br>
+<button onclick="login()">Login</button>
+<p>Belum punya akun? <a href="register.html" style="color:#38bdf8;">Daftar</a></p>
+<script>
+async function login() {
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  const res = await fetch('/api/login', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ email, password })
+  });
+  const data = await res.json();
+  if (data.token) {
+    localStorage.setItem('token', data.token);
+    alert('Login sukses!');
+    location.href = '/';
+  } else {
+    alert(data.error || 'Gagal login');
+  }
+}
+</script>
+</body>
+</html>
+[root@VM-8-17-opencloudos public]# ls
+app.js  index.html  login.html  profile.html  register.html  stlye.css
+[root@VM-8-17-opencloudos public]# cat profile.html
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Profil Pengguna</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen p-6">
+  <div class="max-w-3xl mx-auto bg-gray-800 p-6 rounded">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-2xl font-semibold">Informasi Pengguna</h2>
+      <button onclick="logout()" class="px-3 py-2 bg-red-500 rounded">Logout</button>
+    </div>
+    <form class="space-y-4">
+      <div>
+        <label class="block text-sm text-gray-400">Username</label>
+        <input id="username" class="w-full bg-gray-700 rounded px-3 py-2" readonly>
+      </div>
+      <div>
+        <label class="block text-sm text-gray-400">Email</label>
+        <input id="email" class="w-full bg-gray-700 rounded px-3 py-2" readonly>
+      </div>
+      <div>
+        <label class="block text-sm text-gray-400">Nomor HP</label>
+        <input id="phone" class="w-full bg-gray-700 rounded px-3 py-2" readonly>
+      </div>
+    </form>
+  </div>
+<script>
+async function loadProfile() {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    window.location.href = '/login.html';
+    return;
+  }
+  const res = await fetch('/api/profile', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  const data = await res.json();
+  if (data.error) {
+    alert('Sesi habis, silakan login ulang');
+    localStorage.removeItem('token');
+    window.location.href = '/login.html';
+    return;
+  }
+  document.getElementById('username').value = data.username;
+  document.getElementById('email').value = data.email;
+  document.getElementById('phone').value = data.phone || '-';
+}
+function logout() {
+  localStorage.removeItem('token');
+  window.location.href = '/login.html';
+}
+document.addEventListener('DOMContentLoaded', loadProfile);
+</script>
+</body>
+</html>
