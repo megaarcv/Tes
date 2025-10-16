@@ -1,5 +1,5 @@
 // ============================
-// SHIZA DASHBOARD SERVER
+// SHIZA DASHBOARD SERVER - FINAL EDITION
 // ============================
 
 const express = require('express');
@@ -22,7 +22,7 @@ const USERS_FILE = './users.json';
 // Pastikan file users.json ada
 if (!fs.existsSync(USERS_FILE)) fs.writeFileSync(USERS_FILE, JSON.stringify([]));
 
-// Fungsi bantu untuk baca/tulis user
+// === Fungsi bantu ===
 function loadUsers() {
   return JSON.parse(fs.readFileSync(USERS_FILE));
 }
@@ -35,7 +35,6 @@ function saveUsers(users) {
 // ============================
 app.post('/api/register', async (req, res) => {
   const { name, email, password, phone } = req.body;
-
   if (!name || !email || !password)
     return res.status(400).json({ error: 'Lengkapi semua kolom!' });
 
@@ -100,13 +99,12 @@ function verifyToken(req, res, next) {
 }
 
 // ============================
-// PROFILE
+// PROFILE - GET (lihat data)
 // ============================
 app.get('/api/profile', verifyToken, (req, res) => {
   const users = loadUsers();
   const user = users.find(u => u.id === req.user.id);
   if (!user) return res.status(404).json({ error: 'User tidak ditemukan!' });
-
   res.json({
     username: user.name,
     email: user.email,
@@ -115,7 +113,58 @@ app.get('/api/profile', verifyToken, (req, res) => {
 });
 
 // ============================
-// PRODUK (ambil dari API publik dummyjson)
+// PROFILE - PUT (update data)
+// ============================
+app.put('/api/profile', verifyToken, (req, res) => {
+  const { username, phone } = req.body;
+  const users = loadUsers();
+  const user = users.find(u => u.id === req.user.id);
+  if (!user) return res.status(404).json({ error: 'User tidak ditemukan!' });
+
+  if (username) user.name = username;
+  if (phone) user.phone = phone;
+
+  saveUsers(users);
+  res.json({ message: 'Profil berhasil diperbarui' });
+});
+
+// ============================
+// PROFILE - DELETE (hapus akun)
+// ============================
+app.delete('/api/profile', verifyToken, (req, res) => {
+  let users = loadUsers();
+  const before = users.length;
+  users = users.filter(u => u.id !== req.user.id);
+
+  if (users.length === before)
+    return res.status(404).json({ error: 'Akun tidak ditemukan!' });
+
+  saveUsers(users);
+  res.json({ success: true, message: 'Akun berhasil dihapus' });
+});
+
+// ============================
+// UBAH PASSWORD
+// ============================
+app.post('/api/change-password', verifyToken, async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  if (!oldPassword || !newPassword)
+    return res.status(400).json({ error: 'Isi semua kolom password!' });
+
+  const users = loadUsers();
+  const user = users.find(u => u.id === req.user.id);
+  if (!user) return res.status(404).json({ error: 'User tidak ditemukan!' });
+
+  const valid = await bcrypt.compare(oldPassword, user.password);
+  if (!valid) return res.status(401).json({ error: 'Password lama salah!' });
+
+  user.password = await bcrypt.hash(newPassword, 10);
+  saveUsers(users);
+  res.json({ message: 'Password berhasil diubah!' });
+});
+
+// ============================
+// PRODUK (ambil dari API publik)
 // ============================
 app.get('/api/products', verifyToken, async (req, res) => {
   try {
@@ -131,4 +180,6 @@ app.get('/api/products', verifyToken, async (req, res) => {
 // SERVER LISTEN
 // ============================
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅ Server running at http://localhost:${PORT}`));
+app.listen(PORT, () =>
+  console.log(`✅  Server running at http://localhost:${PORT}`)
+);
