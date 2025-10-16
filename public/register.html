@@ -1,29 +1,36 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="id">
 <head>
-  <meta charset="utf-8">
-  <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8">
+<title>Daftar Akun</title>
+<style>
+body { background:#0f172a; color:white; font-family:sans-serif; text-align:center; margin-top:10%; }
+input { margin:5px; padding:8px; width:220px; border-radius:6px; border:none; }
+button { padding:8px 20px; border:none; border-radius:6px; background:#22c55e; color:white; cursor:pointer; }
+</style>
 </head>
-<body class="bg-gray-900 text-white flex items-center justify-center h-screen">
-  <form id="regForm" class="bg-gray-800 p-6 rounded w-80 space-y-3">
-    <h1 class="text-xl font-bold mb-4">Daftar Akun</h1>
-    <input name="name" placeholder="Nama" class="w-full p-2 rounded bg-gray-700" required>
-    <input name="email" type="email" placeholder="Email" class="w-full p-2 rounded bg-gray-700" required>
-    <input name="password" type="password" placeholder="Password" class="w-full p-2 rounded bg-gray-700" required>
-    <button class="bg-blue-600 w-full py-2 rounded">Daftar</button>
-    <div class="text-sm text-center mt-2">Sudah punya akun? <a href="/login.html" class="text-blue-400">Login</a></div>
-  </form>
+<body>
+<h2>Registrasi Pengguna</h2>
+<input id="name" placeholder="Nama"><br>
+<input id="email" placeholder="Email"><br>
+<input type="password" id="password" placeholder="Password"><br>
+<button onclick="register()">Daftar</button>
+<p>Sudah punya akun? <a href="login.html" style="color:#38bdf8;">Login</a></p>
 
-  <script>
-  document.getElementById('regForm').onsubmit = async (e) => {
-    e.preventDefault();
-    const f = e.target;
-    const data = { name: f.name.value, email: f.email.value, password: f.password.value };
-    const r = await fetch('/api/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-    const j = await r.json();
-    alert(j.message || j.error);
-    if (r.ok) location.href = '/login.html';
-  };
-  </script>
+<script>
+async function register() {
+  const name = document.getElementById('name').value;
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  const res = await fetch('/api/register', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ name, email, password })
+  });
+  const data = await res.json();
+  alert(data.message || data.error);
+  if (data.message) location.href = '/login.html';
+}
+</script>
 </body>
-      </html>
+</html>
