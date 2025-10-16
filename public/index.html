@@ -5,16 +5,12 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Shiza Dashboard</title>
 
-  <!-- Tailwind CDN (untuk prototyping cepat) -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
-    /* tambahan kecil supaya sidebar overlay mobile */
     .sidebar { width: 280px; }
     .card-radius { border-radius: 12px; }
-    /* scrollbar kecil */
     ::-webkit-scrollbar { width: 6px; height:6px; }
     ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 6px; }
   </style>
@@ -26,8 +22,8 @@
       <div class="flex items-center gap-3 mb-6">
         <div class="w-10 h-10 rounded-full bg-gray-600"></div>
         <div>
-          <div class="text-sm font-semibold">Putri Veronica</div>
-          <div class="text-xs text-gray-400">Admin</div>
+          <div id="userName" class="text-sm font-semibold">User</div>
+          <div class="text-xs text-gray-400">Akun Aktif</div>
         </div>
       </div>
 
@@ -40,21 +36,19 @@
         <a class="block py-2 px-3 rounded hover:bg-gray-700">Riwayat Transaksi</a>
         <div class="mt-6">
           <a class="block py-2 px-3 rounded hover:bg-gray-700">Support</a>
-          <a class="block py-2 px-3 rounded hover:bg-gray-700">Logout</a>
+          <a href="#" onclick="logout()" class="block py-2 px-3 rounded hover:bg-gray-700 text-red-400">Logout</a>
         </div>
       </nav>
     </aside>
 
     <!-- Main -->
     <main class="flex-1 p-6">
-      <!-- top bar mobile toggle -->
       <div class="flex items-center justify-between md:hidden mb-4">
         <button id="btnToggle" class="px-3 py-2 bg-gray-800 rounded">☰</button>
         <div class="text-lg font-semibold">Dashboard</div>
         <div></div>
       </div>
 
-      <!-- Cards -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div class="bg-blue-500 p-6 card-radius">
           <div class="text-sm text-blue-100">Pendapatan Bulan Ini</div>
@@ -66,7 +60,6 @@
         </div>
       </div>
 
-      <!-- Products + Chart -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <section class="lg:col-span-2 bg-gray-800 p-4 card-radius">
           <div class="flex items-center justify-between mb-4">
@@ -74,9 +67,7 @@
             <button id="refreshBtn" class="text-sm px-3 py-1 bg-gray-700 rounded">Refresh</button>
           </div>
 
-          <div id="productList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- diisi lewat JS -->
-          </div>
+          <div id="productList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </section>
 
         <aside class="bg-gray-800 p-4 card-radius">
@@ -87,6 +78,52 @@
     </main>
   </div>
 
-  <script src="./app.js"></script>
+<script>
+  // Proteksi halaman
+  document.addEventListener('DOMContentLoaded', async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = '/login.html';
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/products', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.error) {
+        alert('Sesi login habis, silakan login ulang.');
+        localStorage.removeItem('token');
+        window.location.href = '/login.html';
+        return;
+      }
+
+      document.getElementById('userName').textContent = data.user?.name || 'User';
+      renderProducts(data.data);
+    } catch (err) {
+      console.error('Gagal memuat data:', err);
+    }
+  });
+
+  function logout() {
+    localStorage.removeItem('token');
+    alert('Berhasil logout!');
+    window.location.href = '/login.html';
+  }
+
+  function renderProducts(products) {
+    const container = document.getElementById('productList');
+    container.innerHTML = '';
+    products.forEach(p => {
+      container.innerHTML += `
+        <div class="bg-gray-700 p-4 rounded">
+          <img src="${p.image}" alt="${p.title}" class="w-full h-40 object-cover rounded mb-3">
+          <h4 class="font-semibold text-sm">${p.title}</h4>
+          <div class="text-sm text-gray-400">Rp ${p.price}</div>
+        </div>`;
+    });
+  }
+</script>
 </body>
   </html>
