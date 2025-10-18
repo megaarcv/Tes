@@ -8,7 +8,7 @@
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-color: #f7f9fc;
+      background-color: #f9fafb;
       color: #333;
       display: flex;
       flex-direction: column;
@@ -17,35 +17,25 @@
       height: 100vh;
       margin: 0;
     }
-    .container {
-      text-align: center;
-      background: #fff;
+    .card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.1);
       padding: 40px 30px;
-      border-radius: 14px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+      text-align: center;
       max-width: 360px;
       width: 90%;
     }
-    .container img {
-      width: 90px;
-      margin-bottom: 20px;
-    }
-    h1 {
-      margin: 0;
-      font-size: 26px;
-      color: #111827;
-    }
-    p.desc {
-      margin: 8px 0 20px;
-      color: #6b7280;
-    }
+    .card img { width: 90px; margin-bottom: 20px; }
+    h1 { margin: 0; font-size: 26px; color: #111827; }
+    p { color: #6b7280; margin: 12px 0 24px; }
     .btn-google {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
       background-color: #4285f4;
-      color: #fff;
+      color: white;
       border: none;
       border-radius: 6px;
       padding: 10px 18px;
@@ -55,21 +45,18 @@
     }
     .btn-google:hover { background-color: #357ae8; }
     footer {
-      margin-top: 30px;
+      margin-top: 40px;
       font-size: 12px;
-      color: #888;
-      text-align: center;
+      color: #999;
     }
-    footer a { color: #2563eb; text-decoration: none; }
   </style>
 </head>
 <body>
 
-  <div class="container">
+  <div class="card">
     <img src="/logo.png" alt="Logo Shiza">
     <h1>Shiza Dashboard</h1>
-    <p class="desc">Kami menggunakan sistem Single Sign-On (SSO).</p>
-
+    <p>Kami menggunakan sistem Single Sign-On (SSO).</p>
     <a href="/auth/google" class="btn-google">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="22" height="22">
         <path fill="#EA4335" d="M24 9.5c3.8 0 6.3 1.6 7.8 3l5.7-5.7C34.5 3 29.7.5 24 .5 14.8.5 7.2 4.9 2.5 11.9l7 5.5C11.5 12.1 17.2 9.5 24 9.5z"/>
@@ -79,13 +66,8 @@
       </svg>
       Login dengan Google SSO
     </a>
-
-    <p style="margin-top:20px;">Belum punya akun? <a href="/auth/google">Signup via Google</a></p>
   </div>
 
-  <footer>
-    © 2025 Shiza Dashboard — Crafted with shiza store
-  </footer>
-
+  <footer>© 2025 Shiza Dashboard — Crafted with ❤️ by Shiza Gallery</footer>
 </body>
 </html>
