@@ -2,180 +2,144 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Shiza Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" href="/logo.png">
   <style>
-    body { background:#0f172a; color:white; font-family:sans-serif; }
-    .card-radius { border-radius:12px; }
-    .sidebar {
-      transition: transform 0.3s ease;
+    body {
+      background-color: #0f172a;
+      color: #fff;
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 20px;
     }
-    .sidebar.hidden { transform: translateX(-100%); }
-    @media (min-width:768px) {
-      .sidebar.hidden { transform: translateX(0); }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+    h1 { font-size: 24px; }
+    button {
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 14px;
+      cursor: pointer;
+    }
+    button:hover { background: #dc2626; }
+    .card {
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    .produk {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .produk-item {
+      background: #334155;
+      padding: 10px;
+      border-radius: 10px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .produk-item img {
+      width: 70px;
+      height: 70px;
+      border-radius: 8px;
+      object-fit: cover;
     }
   </style>
+
+  <script>
+    // === TOKEN MANAGEMENT ===
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+
+    if (token) {
+      localStorage.setItem('shiza_token', token);
+      window.history.replaceState({}, document.title, '/');
+    }
+
+    const savedToken = localStorage.getItem('shiza_token');
+    if (!savedToken) {
+      window.location.href = '/login.html';
+    }
+
+    async function getProfile() {
+      try {
+        const res = await fetch('/api/profile', {
+          headers: { Authorization: 'Bearer ' + localStorage.getItem('shiza_token') }
+        });
+        if (!res.ok) {
+          localStorage.removeItem('shiza_token');
+          return window.location.href = '/login.html';
+        }
+        const user = await res.json();
+        document.getElementById('userName').innerText = user.name;
+      } catch (err) {
+        console.error(err);
+        window.location.href = '/login.html';
+      }
+    }
+
+    async function getProducts() {
+      const res = await fetch('/api/products', {
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('shiza_token') }
+      });
+      const data = await res.json();
+      const list = document.getElementById('produkList');
+      list.innerHTML = '';
+      data.data.forEach(p => {
+        list.innerHTML += `
+          <div class="produk-item">
+            <img src="${p.image}" alt="${p.title}">
+            <div>
+              <strong>${p.title}</strong><br>
+              <span>Rp ${p.price}</span>
+            </div>
+          </div>`;
+      });
+    }
+
+    function logout() {
+      localStorage.removeItem('shiza_token');
+      window.location.href = '/login.html';
+    }
+
+    window.onload = () => {
+      getProfile();
+      getProducts();
+    };
+  </script>
 </head>
-<body class="min-h-screen overflow-x-hidden">
-
-<!-- ======================== LOGIN SECTION ======================== -->
-<section id="loginSection" class="flex flex-col items-center justify-center min-h-screen">
-  <h2 class="text-2xl font-bold mb-4">Login ke Dashboard</h2>
-  <input type="email" id="email" placeholder="Email"
-         class="w-64 p-2 mb-2 text-black rounded">
-  <input type="password" id="password" placeholder="Password"
-         class="w-64 p-2 mb-3 text-black rounded">
-  <button onclick="login()" class="px-4 py-2 bg-blue-600 rounded hover:bg-blue-500">Login</button>
-
-  <p class="mt-4 text-gray-400">Atau masuk dengan:</p>
-  <a href="/auth/google"
-     class="flex items-center gap-2 bg-red-500 hover:bg-red-400 px-4 py-2 rounded text-sm mt-2">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20" height="20">
-      <path fill="#EA4335" d="M24 9.5c3.8 0 6.3 1.6 7.8 3l5.7-5.7C34.5 3 29.7.5 24 .5 14.8.5 7.2 4.9 2.5 11.9l7 5.5C11.5 12.1 17.2 9.5 24 9.5z"/>
-      <path fill="#34A853" d="M46.1 24.6c0-1.5-.1-3-.3-4.4H24v8.5h12.5c-.5 2.7-2 5.1-4.3 6.6l6.6 5.1c3.9-3.6 7.3-9.2 7.3-15.8z"/>
-      <path fill="#4A90E2" d="M9.4 28.4c-1.1-3.2-1.1-6.7 0-9.9L2.5 13.1C-.8 19.2-.8 28.8 2.5 35l6.9-6.6z"/>
-      <path fill="#FBBC05" d="M24 46.5c5.7 0 10.5-1.9 14-5.2l-6.6-5.1c-1.8 1.2-4.1 1.9-7.4 1.9-6.8 0-12.5-2.6-14.5-6.9l-7 5.5c4.8 7.1 12.4 11.5 21.5 11.5z"/>
-    </svg>
-    Login dengan Google
-  </a>
-</section>
-
-<!-- ======================== DASHBOARD SECTION ======================== -->
-<section id="dashboardSection" class="hidden">
-  <!-- Header -->
-  <header class="md:hidden flex justify-between items-center p-4 bg-gray-800 fixed top-0 left-0 right-0 z-50">
-    <button id="menuBtn" class="text-white text-2xl">☰</button>
-    <h1 class="text-lg font-semibold">Shiza Dashboard</h1>
+<body>
+  <header>
+    <h1>Shiza Dashboard</h1>
+    <div>
+      <span id="userName">Memuat...</span>
+      <button onclick="logout()">Keluar</button>
+    </div>
   </header>
 
-  <div class="flex pt-16 md:pt-0">
-    <!-- Sidebar -->
-    <aside id="sidebar" class="sidebar fixed top-0 left-0 bg-gray-800 p-4 h-full w-64 transform -translate-x-full md:translate-x-0 md:static md:block z-40">
-      <div class="flex items-center gap-3 mb-6">
-        <div class="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center font-bold">S</div>
-        <div>
-          <div id="userName" class="text-sm font-semibold">User</div>
-          <div class="text-xs text-gray-400">Akun Aktif</div>
-        </div>
-      </div>
-      <nav>
-        <a href="#" class="block py-2 px-3 rounded bg-gray-700 mb-2">Dashboard</a>
-        <a href="#" class="block py-2 px-3 rounded hover:bg-gray-700">My Balance</a>
-        <a href="#" class="block py-2 px-3 rounded hover:bg-gray-700">My Transactions</a>
-        <div class="mt-4 text-gray-400 uppercase text-xs">Produk</div>
-        <a href="#" class="block py-2 px-3 rounded hover:bg-gray-700 mt-2">Tembak Paket XL</a>
-        <a href="#" class="block py-2 px-3 rounded hover:bg-gray-700">Riwayat Transaksi</a>
-        <div class="mt-6">
-          <a href="#" class="block py-2 px-3 rounded hover:bg-gray-700">Support</a>
-          <a href="#" onclick="logout()" class="block py-2 px-3 rounded hover:bg-gray-700 text-red-400">Logout</a>
-        </div>
-      </nav>
-    </aside>
-
-    <!-- Main content -->
-    <main class="flex-1 p-6 w-full md:ml-64">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div class="bg-blue-500 p-6 card-radius">
-          <div class="text-sm text-blue-100">Pendapatan Bulan Ini</div>
-          <div class="text-3xl font-bold mt-2">Rp 40.000,00</div>
-        </div>
-        <div class="bg-indigo-600 p-6 card-radius">
-          <div class="text-sm text-indigo-100">Pendapatan Minggu Ini</div>
-          <div class="text-3xl font-bold mt-2">Rp 40.000,00</div>
-        </div>
-      </div>
-
-      <section class="bg-gray-800 p-4 card-radius">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-semibold">Produk</h2>
-          <button id="refreshBtn" class="text-sm px-3 py-1 bg-gray-700 rounded">Refresh</button>
-        </div>
-        <div id="productList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-      </section>
-    </main>
+  <div class="card">
+    <h3>Pendapatan Bulan Ini</h3>
+    <h2>Rp 40.000,00</h2>
   </div>
-</section>
 
-<!-- ======================== SCRIPT ======================== -->
-<script>
-  const loginSection = document.getElementById('loginSection');
-  const dashboardSection = document.getElementById('dashboardSection');
+  <div class="card">
+    <h3>Pendapatan Minggu Ini</h3>
+    <h2>Rp 40.000,00</h2>
+  </div>
 
-  const tokenUrl = new URLSearchParams(window.location.search).get('token');
-  if (tokenUrl) {
-    localStorage.setItem('token', tokenUrl);
-    window.history.replaceState({}, document.title, '/');
-  }
-
-  const token = localStorage.getItem('token');
-  if (token) showDashboard(); // langsung ke dashboard jika sudah login
-
-  async function login() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const res = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
-    const data = await res.json();
-    if (data.token) {
-      localStorage.setItem('token', data.token);
-      showDashboard();
-    } else {
-      alert(data.error || 'Login gagal!');
-    }
-  }
-
-  function logout() {
-    localStorage.removeItem('token');
-    location.reload();
-  }
-
-  function showDashboard() {
-    loginSection.classList.add('hidden');
-    dashboardSection.classList.remove('hidden');
-    loadProfile();
-    loadProducts();
-  }
-
-  async function loadProfile() {
-    const token = localStorage.getItem('token');
-    const res = await fetch('/api/profile', {
-      headers: { Authorization: 'Bearer ' + token }
-    });
-    const data = await res.json();
-    if (data.name) document.getElementById('userName').textContent = data.name;
-  }
-
-  async function loadProducts() {
-    const token = localStorage.getItem('token');
-    const res = await fetch('/api/products', {
-      headers: { Authorization: 'Bearer ' + token }
-    });
-    const result = await res.json();
-    const container = document.getElementById('productList');
-    container.innerHTML = '';
-    result.data.forEach(p => {
-      container.innerHTML += `
-        <div class="bg-gray-700 p-4 rounded">
-          <img src="${p.image}" alt="${p.title}" class="w-full h-40 object-cover rounded mb-3">
-          <h4 class="font-semibold text-sm">${p.title}</h4>
-          <div class="text-sm text-gray-400">Rp ${p.price}</div>
-        </div>`;
-    });
-  }
-
-  // Sidebar toggle
-  const sidebar = document.getElementById('sidebar');
-  const menuBtn = document.getElementById('menuBtn');
-  if (menuBtn) {
-    menuBtn.addEventListener('click', () => {
-      sidebar.classList.toggle('-translate-x-full');
-    });
-  }
-</script>
-
+  <div class="card">
+    <h3>Produk</h3>
+    <div id="produkList" class="produk">Memuat produk...</div>
+  </div>
 </body>
 </html>
