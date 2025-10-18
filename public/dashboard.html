@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shiza Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .card-radius { border-radius: 12px; }
+    .sidebar {
+      width: 260px;
+      transition: transform 0.3s ease;
+    }
+    .sidebar.hidden { transform: translateX(-100%); }
+    @media (min-width: 768px) {
+      .sidebar.hidden { transform: translateX(0); }
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+
+  <!-- Header mobile -->
+  <div class="md:hidden flex justify-between items-center p-4 bg-gray-800">
+    <button id="menuBtn" class="text-white text-2xl">☰</button>
+    <h1 class="text-lg font-semibold">Shiza Dashboard</h1>
+  </div>
+
+  <div class="flex">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar bg-gray-800 p-4 fixed md:static h-full hidden md:block z-50">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center font-bold">S</div>
+        <div>
+          <div id="userName" class="text-sm font-semibold">User</div>
+          <div class="text-xs text-gray-400">Akun Aktif</div>
+        </div>
+      </div>
+      <nav>
+        <a href="#" class="block py-2 px-3 rounded bg-gray-700 mb-2">Dashboard</a>
+        <a href="#" class="block py-2 px-3 rounded hover:bg-gray-700">My Balance</a>
+        <a href="#" class="block py-2 px-3 rounded hover:bg-gray-700">My Transactions</a>
+        <div class="mt-4 text-gray-400 uppercase text-xs">Produk</div>
+        <a href="#" class="block py-2 px-3 rounded hover:bg-gray-700 mt-2">Tembak Paket XL</a>
+        <a href="#" class="block py-2 px-3 rounded hover:bg-gray-700">Riwayat Transaksi</a>
+        <div class="mt-6">
+          <a href="#" class="block py-2 px-3 rounded hover:bg-gray-700">Support</a>
+          <a href="#" onclick="logout()" class="block py-2 px-3 rounded hover:bg-gray-700 text-red-400">Logout</a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Konten Utama -->
+    <main class="flex-1 p-6 md:ml-64">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div class="bg-blue-500 p-6 card-radius">
+          <div class="text-sm text-blue-100">Pendapatan Bulan Ini</div>
+          <div class="text-3xl font-bold mt-2">Rp 40.000,00</div>
+        </div>
+        <div class="bg-indigo-600 p-6 card-radius">
+          <div class="text-sm text-indigo-100">Pendapatan Minggu Ini</div>
+          <div class="text-3xl font-bold mt-2">Rp 40.000,00</div>
+        </div>
+      </div>
+
+      <section class="bg-gray-800 p-4 card-radius">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold">Produk</h2>
+          <button id="refreshBtn" class="text-sm px-3 py-1 bg-gray-700 rounded">Refresh</button>
+        </div>
+        <div id="productList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Script -->
+  <script>
+    // Sidebar toggle
+    const menuBtn = document.getElementById('menuBtn');
+    const sidebar = document.getElementById('sidebar');
+    if (menuBtn) menuBtn.addEventListener('click', () => sidebar.classList.toggle('hidden'));
+
+    // Token dari URL (SSO)
+    const params = new URLSearchParams(window.location.search);
+    const tokenUrl = params.get('token');
+    if (tokenUrl) {
+      localStorage.setItem('token', tokenUrl);
+      window.history.replaceState({}, document.title, '/dashboard.html');
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = '/login.html';
+
+    // Ambil profil user
+    fetch('/api/profile', { headers: { Authorization: 'Bearer ' + token } })
+      .then(res => res.json())
+      .then(data => {
+        if (data.name) document.getElementById('userName').textContent = data.name;
+      })
+      .catch(() => window.location.href = '/login.html');
+
+    // Ambil produk
+    function loadProducts() {
+      fetch('/api/products', { headers: { Authorization: 'Bearer ' + token } })
+        .then(res => res.json())
+        .then(data => {
+          const container = document.getElementById('productList');
+          container.innerHTML = '';
+          data.data.forEach(p => {
+            container.innerHTML += `
+              <div class="bg-gray-700 p-4 rounded">
+                <img src="${p.image}" alt="${p.title}" class="w-full h-40 object-cover rounded mb-3">
+                <h4 class="font-semibold text-sm">${p.title}</h4>
+                <div class="text-sm text-gray-400">Rp ${p.price}</div>
+              </div>
+            `;
+          });
+        });
+    }
+
+    loadProducts();
+    document.getElementById('refreshBtn').addEventListener('click', loadProducts);
+
+    function logout() {
+      localStorage.removeItem('token');
+      window.location.href = '/login.html';
+    }
+  </script>
+</body>
+</html>
